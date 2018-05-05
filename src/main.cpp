@@ -124,14 +124,15 @@ GLFWwindow* initialize() {
 
 GLuint loadTexture(const char* path) {
     int width, height, nChannels;
-    uint8_t *data = stbi_load(path, &width, &height, &nChannels, 4);
+    uint8_t *data = stbi_load(path, &width, &height, &nChannels, 3);
+    int stride = width * 3;
     std::vector<uint8_t> flippedData(width * height * nChannels);
 
     // flip y
     for (int y = 0; y < height; ++y) {
-        auto src = data + y * width * 4;
-        auto dst = flippedData.data() + (height - y - 1) * width * 4;
-        memcpy(dst, src, width * 4);
+        auto src = data + y * stride;
+        auto dst = flippedData.data() + (height - y - 1) * stride;
+        memcpy(dst, src, stride);
     }
     stbi_image_free(data);
 
@@ -139,7 +140,7 @@ GLuint loadTexture(const char* path) {
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, flippedData.data());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, flippedData.data());
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
