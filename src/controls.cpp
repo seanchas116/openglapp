@@ -18,7 +18,7 @@ void Controls::computeFromInputs() {
     float ydiff = windowHeight / 2 - ypos;
 
     horizontalAngle += mouseSpeed * float(xdiff);
-    verticalAngle -= mouseSpeed * float(ydiff);
+    verticalAngle += mouseSpeed * float(ydiff);
 
     vec3 direction = vec3(cos(verticalAngle) * sin(horizontalAngle),
                           sin(verticalAngle),
@@ -26,8 +26,7 @@ void Controls::computeFromInputs() {
     vec3 right = vec3(sin(horizontalAngle - M_PI/2.f),
                       0,
                       cos(horizontalAngle - M_PI/2.f));
-    //vec3 up = cross(right, direction);
-    vec3 up = vec3(0, 1, 0);
+    vec3 up = cross(right, direction);
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         position += direction * deltaTime * speed;
@@ -36,10 +35,10 @@ void Controls::computeFromInputs() {
         position -= direction * deltaTime * speed;
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        position -= right * deltaTime * speed;
+        position += right * deltaTime * speed;
     }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        position += right * deltaTime * speed;
+        position -= right * deltaTime * speed;
     }
 
     projectionMatrix = glm::perspective(glm::radians(initialFoV), float(windowWidth) / float(windowHeight), 0.1f, 10000.f);
