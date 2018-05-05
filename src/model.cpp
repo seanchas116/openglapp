@@ -51,7 +51,7 @@ Model::Model(const char *objPath) {
           normalData.push_back(ny);
           normalData.push_back(nz);
           uvData.push_back(tx);
-          uvData.push_back(ty);
+          uvData.push_back(1.f - ty);
         }
         index_offset += fv;
 
