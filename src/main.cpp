@@ -3,6 +3,7 @@
 #include <glm/vec2.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
+#include <vector>
 #include "shader.hpp"
 #include "controls.hpp"
 #define STB_IMAGE_IMPLEMENTATION
@@ -123,14 +124,22 @@ GLFWwindow* initialize() {
 
 GLuint loadTexture(const char* path) {
     int width, height, nChannels;
-    uint8_t *data = stbi_load(path, &width, &height, &nChannels, 0);
+    uint8_t *data = stbi_load(path, &width, &height, &nChannels, 4);
+    std::vector<uint8_t> flippedData(width * height * nChannels);
+
+    // flip y
+    for (int y = 0; y < height; ++y) {
+        auto src = data + y * width * 4;
+        auto dst = flippedData.data() + (height - y - 1) * width * 4;
+        memcpy(dst, src, width * 4);
+    }
+    stbi_image_free(data);
 
     GLuint textureID;
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-    stbi_image_free(data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, flippedData.data());
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
