@@ -146,7 +146,7 @@ int main() {
     GLuint texture = loadDDS("./resources/uvmap.DDS");
     glUniform1i(textureID, 0);
 
-    Model model("./resources/cube.obj");
+    Model model("./resources/suzanne.obj");
 
     do {
         controls.computeFromInputs();
