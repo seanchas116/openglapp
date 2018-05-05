@@ -4,73 +4,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include "shader.hpp"
+#include "controls.hpp"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 using namespace glm;
-
-static const ivec2 windowSize = {1024, 768};
-
-static GLFWwindow* window;
-
-struct Controls {
-    vec3 position = vec3(0, 0, 5);
-    // zx angle
-    float horizontalAngle = M_PI;
-    // xy angle
-    float verticalAngle = 0;
-
-    float initialFoV = 45;
-
-    float speed = 3;
-    float mouseSpeed = 0.005;
-
-    mat4 projectionMatrix;
-    mat4 viewMatrix;
-
-    void computeFromInputs() {
-        static double lastTime = glfwGetTime();
-        double currentTime = glfwGetTime();
-        float deltaTime = float(currentTime - lastTime);
-        lastTime = currentTime;
-
-        double xpos, ypos;
-        glfwGetCursorPos(window, &xpos, &ypos);
-        glfwSetCursorPos(window, windowSize.x / 2, windowSize.y / 2);
-        float xdiff = windowSize.x / 2 - xpos;
-        float ydiff = windowSize.y / 2 - ypos;
-        std::cout << xdiff << "," << ydiff << std::endl;
-
-        horizontalAngle += mouseSpeed * float(xdiff);
-        verticalAngle += mouseSpeed * float(ydiff);
-        std::cout << horizontalAngle << "," << verticalAngle << std::endl;
-
-        vec3 direction = vec3(cos(verticalAngle) * sin(horizontalAngle),
-                              sin(verticalAngle),
-                              cos(verticalAngle) * cos(horizontalAngle));
-        vec3 right = vec3(sin(horizontalAngle - M_PI/2.f),
-                          0,
-                          cos(horizontalAngle - M_PI/2.f));
-        //vec3 up = cross(right, direction);
-        vec3 up = vec3(0, 1, 0);
-
-        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-            position += direction * deltaTime * speed;
-        }
-        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-            position -= direction * deltaTime * speed;
-        }
-        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-            position += right * deltaTime * speed;
-        }
-        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-            position -= right * deltaTime * speed;
-        }
-
-        projectionMatrix = glm::perspective(glm::radians(initialFoV), float(windowSize.x) / float(windowSize.y), 0.1f, 10000.f);
-        viewMatrix = glm::lookAt(position, position + direction, up);
-    }
-};
-
-Controls controls;
 
 static const GLfloat vertexData[] = {
     -1.0f,-1.0f,-1.0f, // triangle 1 : begin
@@ -150,11 +88,12 @@ static const GLfloat uvData[] = {
     0.667979f, 1.0f-0.335851f
 };
 
-bool initialize() {
+GLFWwindow* initialize() {
+    GLFWwindow* window;
     glewExperimental = true;
     if (!glfwInit()) {
         std::cout << "Failed to initialize GLFW" << std::endl;
-        return false;
+        return nullptr;
     }
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -162,30 +101,52 @@ bool initialize() {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    window = glfwCreateWindow(windowSize.x, windowSize.y, "Playground", nullptr, nullptr);
+    window = glfwCreateWindow(1024, 768, "Playground", nullptr, nullptr);
     if (!window) {
         std::cout << "Failed to open GLFW window" << std::endl;
         glfwTerminate();
-        return false;
+        return nullptr;
     }
 
     glfwMakeContextCurrent(window);
     glewExperimental = true;
     if (glewInit() != GLEW_OK) {
         std::cout << "Failed to initialize GLFW" << std::endl;
-        return false;
+        return nullptr;
     }
 
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    return true;
+    return window;
+}
+
+GLuint loadTexture(const char* path) {
+    int width, height, nChannels;
+    uint8_t *data = stbi_load(path, &width, &height, &nChannels, 0);
+
+    GLuint textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    stbi_image_free(data);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    return textureID;
 }
 
 int main() {
-    if (!initialize()) {
+    auto window = initialize();
+    if (!window) {
         return -1;
     }
+    Controls controls(window);
 
     glClearColor(0, 0, 0, 1);
 
@@ -212,18 +173,18 @@ int main() {
 
     // shader
 
-    GLuint programID = LoadShaders("SimpleVertexShader.vert", "SimpleFragmentShader.frag");
+    GLuint programID = LoadShaders("./resources/shader.vert", "./resources/shader.frag");
     glUseProgram(programID);
 
     GLuint textureID = glGetUniformLocation(programID, "textureSampler");
-    GLuint texture = loadBMP_custom("./uvtemplate.bmp");
+    GLuint texture = loadTexture("./resources/texture.png");
     glUniform1i(textureID, 0);
 
     do {
         controls.computeFromInputs();
 
         mat4 modelMatrix;
-        mat4 mvpMatrix = controls.projectionMatrix * controls.viewMatrix * modelMatrix;
+        mat4 mvpMatrix = controls.getProjectionMatrix() * controls.getViewMatrix() * modelMatrix;
 
         GLuint matrixID = glGetUniformLocation(programID, "MVP");
         glUniformMatrix4fv(matrixID, 1, GL_FALSE, &mvpMatrix[0][0]);

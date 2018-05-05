@@ -4,11 +4,14 @@ project(openglapp)
 
 set (CMAKE_CXX_STANDARD 14)
 
+find_package(OpenGL)
 find_package(glfw3)
 find_package(glew)
+include_directories("vendor/stb")
 
-file(GLOB_RECURSE SRCS "src" *.cpp *.hpp)
+file(GLOB_RECURSE SRCS src/*.cpp src/*.hpp)
+file(GLOB_RECURSE SHADERS resources/*.vert resources/*.frag)
 
-add_executable(openglapp ${SRCS})
+add_executable(openglapp ${SRCS} ${SHADERS})
 
-target_link_libraries(openglapp glfw glew)
+target_link_libraries(openglapp ${OPENGL_LIBRARY} glfw glew)
