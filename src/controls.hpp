@@ -20,7 +20,7 @@ class Controls {
     glm::mat4 viewMatrix;
 
 public:
-    Controls(GLFWwindow* window) : window(window) {};
+    Controls(GLFWwindow* window) : window(window) {}
 
     void computeFromInputs();
     glm::mat4 getProjectionMatrix() const { return projectionMatrix; }
