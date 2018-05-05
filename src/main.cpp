@@ -143,7 +143,7 @@ int main() {
     glUseProgram(programID);
 
     GLuint textureID = glGetUniformLocation(programID, "textureSampler");
-    GLuint texture = loadTexture("./resources/texture.png");
+    GLuint texture = loadDDS("./resources/uvmap.DDS");
     glUniform1i(textureID, 0);
 
     Model model("./resources/cube.obj");
