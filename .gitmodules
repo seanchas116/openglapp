@@ -1,3 +1,6 @@
 [submodule "vendor/stb"]
 	path = vendor/stb
 	url = git@github.com:nothings/stb.git
+[submodule "vendor/tinyobjloader"]
+	path = vendor/tinyobjloader
+	url = git@github.com:syoyo/tinyobjloader.git
