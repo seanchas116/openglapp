@@ -13,6 +13,6 @@ include_directories("vendor/tinyobjloader")
 file(GLOB_RECURSE SRCS src/*.cpp src/*.hpp)
 file(GLOB_RECURSE SHADERS resources/*.vert resources/*.frag)
 
-add_executable(openglapp ${SRCS} ${SHADERS} vendor/tinyobjloader/tiny_obj_loader.cc)
+add_executable(openglapp ${SRCS} ${SHADERS})
 
 target_link_libraries(openglapp ${OPENGL_LIBRARY} glfw glew)

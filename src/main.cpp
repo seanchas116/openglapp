@@ -7,6 +7,7 @@
 #include "shader.hpp"
 #include "controls.hpp"
 #include "texture.hpp"
+#include "model.hpp"
 
 using namespace glm;
 
@@ -136,24 +137,6 @@ int main() {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
-    // vertex array
-
-    GLuint vertexArray;
-    glGenVertexArrays(1, &vertexArray);
-    glBindVertexArray(vertexArray);
-
-    // vertex buffer
-
-    GLuint vertexBuffer;
-    glGenBuffers(1, &vertexBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW);
-
-    GLuint uvBuffer;
-    glGenBuffers(1, &uvBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(uvData), uvData, GL_STATIC_DRAW);
-
     // shader
 
     GLuint programID = LoadShaders("./resources/shader.vert", "./resources/shader.frag");
@@ -162,6 +145,8 @@ int main() {
     GLuint textureID = glGetUniformLocation(programID, "textureSampler");
     GLuint texture = loadTexture("./resources/texture.png");
     glUniform1i(textureID, 0);
+
+    Model model("./resources/cube.obj");
 
     do {
         controls.computeFromInputs();
@@ -176,18 +161,10 @@ int main() {
 
         glUseProgram(programID);
 
-        glEnableVertexAttribArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-        glEnableVertexAttribArray(1);
-        glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
 
-        glDrawArrays(GL_TRIANGLES, 0, 12*3);
+        model.draw();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
