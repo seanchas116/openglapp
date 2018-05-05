@@ -54,7 +54,7 @@ int main() {
     }
     Controls controls(window);
 
-    glClearColor(0, 0, 0, 1);
+    glClearColor(0.9, 0.9, 0.9, 1);
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
