@@ -112,11 +112,14 @@ GLFWwindow* initialize() {
     glewExperimental = true;
     if (glewInit() != GLEW_OK) {
         std::cout << "Failed to initialize GLFW" << std::endl;
+        glfwTerminate();
         return nullptr;
     }
 
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwPollEvents();
+    glfwSetCursorPos(window, 1024 / 2, 768 / 2);
 
     return window;
 }
@@ -189,4 +192,6 @@ int main() {
         glfwSwapBuffers(window);
         glfwPollEvents();
     } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
+
+    glfwTerminate();
 }
