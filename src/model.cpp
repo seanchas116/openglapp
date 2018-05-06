@@ -1,10 +1,38 @@
 #include "model.hpp"
+#include "hash.hpp"
 #include <iostream>
+#include <unordered_map>
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 #include <glm/vec3.hpp>
+#include <glm/vec2.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
 
 using namespace glm;
+
+using PackedVertex = std::tuple<vec3, vec2, vec3>;
+
+void indexVertices(const std::vector<PackedVertex>& inVertices,
+                   std::vector<PackedVertex>& outVertices,
+                   std::vector<uint32_t>& outIndices) {
+    outVertices.clear();
+    outIndices.clear();
+    std::unordered_map<PackedVertex, uint32_t> vertexIndices;
+
+    for (auto vertex : inVertices) {
+        auto it = vertexIndices.find(vertex);
+        if (it != vertexIndices.end()) {
+            // same index found
+            outIndices.push_back(it->second);
+        } else {
+            uint32_t index = outVertices.size();
+            outVertices.push_back(vertex);
+            vertexIndices[vertex] = index;
+            outIndices.push_back(index);
+        }
+    }
+}
 
 Model::Model(const char *objPath) {
     tinyobj::attrib_t attrib;
@@ -22,7 +50,8 @@ Model::Model(const char *objPath) {
         throw std::runtime_error(err);
     }
 
-    std::vector<float> vertexData, normalData, uvData;
+
+    std::vector<PackedVertex> nonIndexedVertices;
 
     for (size_t s = 0; s < shapes.size(); s++) {
       // Loop over faces(polygon)
@@ -37,20 +66,13 @@ Model::Model(const char *objPath) {
           tinyobj::real_t vx = attrib.vertices[3*idx.vertex_index+0];
           tinyobj::real_t vy = attrib.vertices[3*idx.vertex_index+1];
           tinyobj::real_t vz = attrib.vertices[3*idx.vertex_index+2];
+          tinyobj::real_t tx = attrib.texcoords[2*idx.texcoord_index+0];
+          tinyobj::real_t ty = attrib.texcoords[2*idx.texcoord_index+1];
           tinyobj::real_t nx = attrib.normals[3*idx.normal_index+0];
           tinyobj::real_t ny = attrib.normals[3*idx.normal_index+1];
           tinyobj::real_t nz = attrib.normals[3*idx.normal_index+2];
-          tinyobj::real_t tx = attrib.texcoords[2*idx.texcoord_index+0];
-          tinyobj::real_t ty = attrib.texcoords[2*idx.texcoord_index+1];
 
-          vertexData.push_back(vx);
-          vertexData.push_back(vy);
-          vertexData.push_back(vz);
-          normalData.push_back(nx);
-          normalData.push_back(ny);
-          normalData.push_back(nz);
-          uvData.push_back(tx);
-          uvData.push_back(ty);
+          nonIndexedVertices.push_back(std::make_tuple(vec3(vx, vy, vz), vec2(tx, ty), vec3(nx, ny, nz)));
         }
         index_offset += fv;
 
@@ -58,6 +80,10 @@ Model::Model(const char *objPath) {
         // shapes[s].mesh.material_ids[f];
       }
     }
+
+    std::vector<PackedVertex> vertices;
+    std::vector<uint32_t> indices;
+    indexVertices(nonIndexedVertices, vertices, indices);
 
     // vertex array
 
@@ -69,38 +95,31 @@ Model::Model(const char *objPath) {
     GLuint vertexBuffer;
     glGenBuffers(1, &vertexBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), vertexData.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(PackedVertex), vertices.data(), GL_STATIC_DRAW);
 
-    GLuint normalBuffer;
-    glGenBuffers(1, &normalBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
-    glBufferData(GL_ARRAY_BUFFER, normalData.size() * sizeof(float), normalData.data(), GL_STATIC_DRAW);
-
-    GLuint uvBuffer;
-    glGenBuffers(1, &uvBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
-    glBufferData(GL_ARRAY_BUFFER, uvData.size() * sizeof(float), uvData.data(), GL_STATIC_DRAW);
+    GLuint indexBuffer;
+    glGenBuffers(1, &indexBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(uint32_t), indices.data(), GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 
     glEnableVertexAttribArray(1);
-    glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 
     glEnableVertexAttribArray(2);
-    glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
 
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-    count = vertexData.size();
+    count = indices.size();
 }
 
 void Model::draw() {
     glBindVertexArray(vertexArrayID);
-    glDrawArrays(GL_TRIANGLES, 0, count);
+    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, (void*)0);
     glBindVertexArray(0);
 }
