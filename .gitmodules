@@ -4,3 +4,9 @@
 [submodule "vendor/tinyobjloader"]
 	path = vendor/tinyobjloader
 	url = git@github.com:syoyo/tinyobjloader.git
+[submodule "vendor/glm"]
+	path = vendor/glm
+	url = git@github.com:g-truc/glm.git
+[submodule "vendor/gli"]
+	path = vendor/gli
+	url = git@github.com:g-truc/gli.git

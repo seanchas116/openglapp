@@ -9,6 +9,8 @@ find_package(glfw3)
 find_package(glew)
 include_directories("vendor/stb")
 include_directories("vendor/tinyobjloader")
+include_directories("vendor/glm")
+include_directories("vendor/gli")
 
 file(GLOB_RECURSE SRCS src/*.cpp src/*.hpp)
 file(GLOB_RECURSE SHADERS resources/*.vert resources/*.frag)
