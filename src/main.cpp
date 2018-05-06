@@ -68,16 +68,34 @@ int main() {
     GLuint texture = loadImage("./resources/uvmap.DDS");
     glUniform1i(textureID, 0);
 
+    GLuint mvpID = glGetUniformLocation(programID, "MVP");
+    GLuint mID = glGetUniformLocation(programID, "M");
+    GLuint vID = glGetUniformLocation(programID, "V");
+
+    GLuint lightID = glGetUniformLocation(programID, "lightPos_worldSpace");
+    glm::vec3 lightPos = glm::vec3(4,4,4);
+    glUniform3f(lightID, lightPos.x, lightPos.y, lightPos.z);
+
+    GLuint lightColorID = glGetUniformLocation(programID, "lightColor");
+    glm::vec3 lightColor = glm::vec3(1,1,1);
+    glUniform3f(lightColorID, lightColor.x, lightColor.y, lightColor.z);
+
+    // model
+
     Model model("./resources/suzanne.obj");
 
     do {
         controls.computeFromInputs();
 
-        mat4 modelMatrix(1);
-        mat4 mvpMatrix = controls.getProjectionMatrix() * controls.getViewMatrix() * modelMatrix;
+        mat4 M(1);
+        mat4 V = controls.getViewMatrix();
+        mat4 P = controls.getProjectionMatrix();
+        mat4 MVP = P * V * M;
 
-        GLuint matrixID = glGetUniformLocation(programID, "MVP");
-        glUniformMatrix4fv(matrixID, 1, GL_FALSE, &mvpMatrix[0][0]);
+
+        glUniformMatrix4fv(mvpID, 1, GL_FALSE, &MVP[0][0]);
+        glUniformMatrix4fv(mID, 1, GL_FALSE, &M[0][0]);
+        glUniformMatrix4fv(vID, 1, GL_FALSE, &V[0][0]);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
