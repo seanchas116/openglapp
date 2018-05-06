@@ -73,7 +73,7 @@ int main() {
     do {
         controls.computeFromInputs();
 
-        mat4 modelMatrix;
+        mat4 modelMatrix(1);
         mat4 mvpMatrix = controls.getProjectionMatrix() * controls.getViewMatrix() * modelMatrix;
 
         GLuint matrixID = glGetUniformLocation(programID, "MVP");
