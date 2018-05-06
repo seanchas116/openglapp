@@ -65,7 +65,7 @@ int main() {
     glUseProgram(programID);
 
     GLuint textureID = glGetUniformLocation(programID, "textureSampler");
-    GLuint texture = loadImageGLI("./resources/uvmap.DDS");
+    GLuint texture = loadImage("./resources/uvmap.DDS");
     glUniform1i(textureID, 0);
 
     Model model("./resources/suzanne.obj");
