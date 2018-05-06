@@ -34,7 +34,6 @@ Model::Model(const char *objPath) {
         for (size_t v = 0; v < fv; v++) {
           // access to vertex
           tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
-          std::cout << idx.vertex_index << "," << idx.normal_index << "," << idx.texcoord_index << std::endl;
           tinyobj::real_t vx = attrib.vertices[3*idx.vertex_index+0];
           tinyobj::real_t vy = attrib.vertices[3*idx.vertex_index+1];
           tinyobj::real_t vz = attrib.vertices[3*idx.vertex_index+2];
